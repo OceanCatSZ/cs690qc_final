@@ -1,9 +1,13 @@
 import numpy as np
 
-F = 0.5
-flist = []
-for i in range(16):
-    psucc = F**2 + 2 * F * (1 - F) / 3 + 5 * ((1 - F) / 3) ** 2
-    F = (F**2 + ((1 - F) / 3)**2) / psucc
-    flist.append(F)
-print(flist)
+def edging(F):
+    if F < 0.6:
+        raise NameError("You dumb ass, use a higher fidelity")
+    edge = np.sqrt(3)/2
+    iter = 0
+    while True:
+        iter += 1
+        psucc = F**2 + 2 * F * (1 - F) / 3 + 5 * ((1 - F) / 3) ** 2
+        F = (F**2 + ((1 - F) / 3)**2) / psucc
+        if F > edge:
+            return iter
