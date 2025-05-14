@@ -40,7 +40,8 @@ class Entanglement:
     def calFid(self, target_state=None):
         if target_state is None:
             target_state = self.phi_plus_dm
-        return fidelity(self.rho, target_state)
+        self.fidelity = fidelity(self.rho, target_state)
+        return self.fidelity
     
     def depolarize(self, t_ms: float, T_depol_ms: float = 5.0):
         """
