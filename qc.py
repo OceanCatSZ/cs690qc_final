@@ -125,8 +125,7 @@ def generate_next_entanglement_BK(node1:Node, L_att=22.5):
     p_success = eta**2/2
 
     # Sample geometric number of attempts until success
-    attempts = ctypes.c_uint64(np.random.geometric(p_success))
-    print(attempts)
+    attempts = ctypes.c_uint64(np.random.geometric(p_success)).value
     time_taken = attempts * tau_attempt
 
     fidelity = (3 * eta + 1) / 4
@@ -152,7 +151,7 @@ def main():
     t_total = 0
 
     ### step 1: initial ent generation and depolarize:
-    nodes = build_uniform_chain(L_total, 0)
+    nodes = build_uniform_chain(L_total, 100)
     root = nodes["A"]
     pointer = root
     entlist = []
