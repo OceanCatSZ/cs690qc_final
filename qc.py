@@ -23,7 +23,7 @@ class Node:
 
 
 class Entanglement:
-    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float):
+    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float = 10):
         self.node1 = node1
         self.node2 = node2
         self.fidelity = fidel
@@ -31,10 +31,10 @@ class Entanglement:
         # Ideal Bell state: |Φ⁺⟩ = (|00⟩ + |11⟩)/√2
         self.phi_plus = (tensor(basis(2, 0), basis(2, 0)) + tensor(basis(2, 1), basis(2, 1))).unit()
         self.phi_plus_dm = ket2dm(self.phi_plus)
-
+    
         # Construct Werner state: ρ = F |Φ⁺⟩⟨Φ⁺| + (1 - F) * (I/4)
         identity = tensor(qeye(2), qeye(2))
-        self.rho = fidelity * self.phi_plus_dm + (1 - fidelity) * (identity / 4)
+        self.rho = self.fidelity * self.phi_plus_dm + (1 - self.fidelity) * (identity / 4)
         self.T_depol = T_depol
 
     def calFid(self, target_state=None):
@@ -95,7 +95,7 @@ def entanglement_swap(ent1: Entanglement, ent2: Entanglement) -> Entanglement:
     rho_AB = rho_proj.ptrace([0, 3])
 
     # Build resulting entanglement object
-    ent_swapped = Entanglement(ent1.node1, ent2.node2, fidelity=fidelity(rho_AB, ent1.phi_plus_dm))
+    ent_swapped = Entanglement(ent1.node1, ent2.node2, fidel=fidelity(rho_AB, ent1.phi_plus_dm))
     ent_swapped.rho = rho_AB
 
     return ent_swapped
@@ -121,7 +121,7 @@ def generate_next_entanglement_BK(node1:Node, L_att=22.5, tau_attempt=1.0):
     time_taken = attempts * tau_attempt
 
     fidelity = (3 * eta + 1) / 4
-    ent = Entanglement(node1, node1.next, p=fidelity)
+    ent = Entanglement(node1, node1.next, fidel=fidelity)
     return ent, time_taken
 
     
@@ -132,20 +132,33 @@ def main():
     L_total = 200 #km
     L_att = 22.5
 
+    ### step 1: initial ent generation and depolarize:
     nodes = build_uniform_chain(L_total)
+    root = nodes["A"]
+    pointer = root
     entlist = []
     gentime = []
-    for key in nodes:
-        ent, t = generate_next_entanglement_BK(nodes[key])
+    while pointer.next != None:
+        ent, t = generate_next_entanglement_BK(pointer)
         if ent is None:
             continue
         entlist.append(ent)
         gentime.append(t)
+        pointer = pointer.next
     maxt = max(gentime)
     for i in range(len(entlist)):
         t_depol = maxt - gentime[i]
         entlist[i].depolarize(t_depol)
     
+    ### step 2: 
+    while len(entlist) != 1:
+        next_entlist = []
+        for i in range(0, len(entlist), 2):
+            if i + 1 >= len(entlist):
+                break
+            next_entlist.append(entanglement_swap(entlist[i], entlist[i + 1]))
+        entlist = next_entlist
+    print(entlist[0].node2.name)
     return
 
 if __name__ == '__main__':
