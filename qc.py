@@ -51,7 +51,6 @@ class Entanglement:
         identity = tensor(qeye(2), qeye(2))
         self.rho = (1 - epsilon) * self.rho + epsilon * (identity / 4)
 
-            
 
 def purify(state1, state2):
     return 
@@ -72,7 +71,7 @@ def build_uniform_chain(L_total, N_repeaters=4):
 
     return nodes
 
-def generate_next_entanglement_BK(node1, node2, L_att=22.5, tau_attempt=1.0):
+def generate_next_entanglement_BK(node1:Node, L_att=22.5, tau_attempt=1.0):
     """
     Attempts to generate an entangled pair between two *connected* nodes via the BK scheme.
     Returns (Entanglement, time_taken) if successful.
@@ -81,7 +80,8 @@ def generate_next_entanglement_BK(node1, node2, L_att=22.5, tau_attempt=1.0):
     # Ensure bidirectional connection
     # if node2 not in node1.neighbors or node1 not in node2.neighbors:
     #     raise ValueError(f"{node1.name} and {node2.name} are not connected as neighbors.")
-
+    if node1.next is None:
+        return None, None
     distance = node1.nextdist/2
     eta = np.exp(-distance / L_att)
     p_success = eta**2/2
@@ -91,7 +91,7 @@ def generate_next_entanglement_BK(node1, node2, L_att=22.5, tau_attempt=1.0):
     time_taken = attempts * tau_attempt
 
     fidelity = (3 * eta + 1) / 4
-    ent = Entanglement(node1, node2, p=fidelity)
+    ent = Entanglement(node1, node1.next, p=fidelity)
     return ent, time_taken
 
     
@@ -103,7 +103,15 @@ def main():
     L_att = 22.5
 
     nodes = build_uniform_chain(L_total)
-    print(nodes)
+    entlist = []
+    gentime = []
+    for key in nodes:
+        ent, t = generate_next_entanglement_BK(nodes[key])
+        if ent is None:
+            continue
+        entlist.append(ent)
+        gentime.append(t)
+    
     return
 
 if __name__ == '__main__':
