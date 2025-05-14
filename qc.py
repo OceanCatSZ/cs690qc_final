@@ -59,9 +59,9 @@ def generate_entanglement_BK(node1, node2, L_att=22.5, tau_attempt=1.0):
     if node2 not in node1.neighbors or node1 not in node2.neighbors:
         raise ValueError(f"{node1.name} and {node2.name} are not connected as neighbors.")
 
-    distance = node1.neighbors[node2]
+    distance = node1.neighbors[node2]/2
     eta = np.exp(-distance / L_att)
-    p_success = eta**2
+    p_success = eta**2/2
 
     # Sample geometric number of attempts until success
     attempts = np.random.geometric(p_success)
