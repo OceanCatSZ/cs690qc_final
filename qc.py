@@ -111,6 +111,10 @@ def main():
             continue
         entlist.append(ent)
         gentime.append(t)
+    maxt = max(gentime)
+    for i in range(len(entlist)):
+        t_depol = maxt - gentime[i]
+        entlist[i].depolarize(t_depol)
     
     return
 
