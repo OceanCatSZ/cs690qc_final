@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from qutip import *
+import ctypes
 
 c = 2 * 10**2
 operation_time = 10 ** -3
@@ -58,6 +59,7 @@ class Entanglement:
 
 
 def purify(state1, state2):
+    
     return 
 
 def build_uniform_chain(L_total, N_repeaters=0):
@@ -123,11 +125,12 @@ def generate_next_entanglement_BK(node1:Node, L_att=22.5):
     p_success = eta**2/2
 
     # Sample geometric number of attempts until success
-    attempts = np.random.geometric(p_success)
+    attempts = ctypes.c_uint64(np.random.geometric(p_success))
+    print(attempts)
     time_taken = attempts * tau_attempt
 
-    # fidelity = (3 * eta + 1) / 4
-    fidelity = 1
+    fidelity = (3 * eta + 1) / 4
+    # fidelity = 1
     ent = Entanglement(node1, node1.next, fidel=fidelity)
     return ent, time_taken
 
@@ -144,12 +147,12 @@ def main():
     # Let's assume a linked list structure
     alice = Node("A")
     Bob = Node("B")
-    L_total = 200 # km
+    L_total = 500 # km
     L_att = 22.5
     t_total = 0
 
     ### step 1: initial ent generation and depolarize:
-    nodes = build_uniform_chain(L_total)
+    nodes = build_uniform_chain(L_total, 0)
     root = nodes["A"]
     pointer = root
     entlist = []
