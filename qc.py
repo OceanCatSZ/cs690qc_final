@@ -151,7 +151,7 @@ def main():
     t_total = 0
 
     ### step 1: initial ent generation and depolarize:
-    nodes = build_uniform_chain(L_total, 100)
+    nodes = build_uniform_chain(L_total, 20)
     root = nodes["A"]
     pointer = root
     entlist = []
@@ -163,6 +163,7 @@ def main():
         entlist.append(ent)
         gentime.append(t)
         pointer = pointer.next
+    print(f"Initial fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
     maxt = max(gentime)
     t_total += maxt
     for i in range(len(entlist)):
@@ -188,8 +189,8 @@ def main():
             next_entlist.append(new_ent)
         t_total += sub_total_time + operation_time
         entlist = next_entlist
-    print(entlist[0].calFid(entlist[0].phi_plus_dm))
-    print(t_total)
+    print(f"Final fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
+    print(f"total time taken for this process is {t_total}")
     return
 
 if __name__ == '__main__':
