@@ -23,10 +23,10 @@ class Node:
 
 
 class Entanglement:
-    def __init__(self, node1: Node, node2: Node, fidelity: float, T_depol: float):
+    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float):
         self.node1 = node1
         self.node2 = node2
-        self.fidelity = fidelity
+        self.fidelity = fidel
 
         # Ideal Bell state: |Φ⁺⟩ = (|00⟩ + |11⟩)/√2
         self.phi_plus = (tensor(basis(2, 0), basis(2, 0)) + tensor(basis(2, 1), basis(2, 1))).unit()
@@ -70,6 +70,36 @@ def build_uniform_chain(L_total, N_repeaters=4):
         node1.set_next(node2, distance=link_distance)
 
     return nodes
+
+def entanglement_swap(ent1: Entanglement, ent2: Entanglement) -> Entanglement:
+    # Validate topology: ent1.node2 must be ent2.node1
+    if ent1.node2 != ent2.node1:
+        raise ValueError(
+            f"Cannot swap: middle nodes do not match. "
+            f"Got {ent1.node2.name} and {ent2.node1.name}."
+        )
+
+    # Combine full state: A–R1–R2–B
+    rho_full = tensor(ent1.rho, ent2.rho)
+
+    # Project onto Φ⁺ Bell state between R1 and R2 (qubits 1 and 2)
+    bell = (tensor(basis(2,0), basis(2,0)) + tensor(basis(2,1), basis(2,1))).unit()
+    P = ket2dm(bell)
+    projector = tensor(qeye(2), P, qeye(2))  # Acts on qubits A-R1-R2-B
+
+    # Apply projection and normalize
+    rho_proj = projector * rho_full * projector
+    rho_proj = rho_proj / rho_proj.tr()
+
+    # Trace out internal qubits R1 and R2 (indices 1 and 2)
+    rho_AB = rho_proj.ptrace([0, 3])
+
+    # Build resulting entanglement object
+    ent_swapped = Entanglement(ent1.node1, ent2.node2, fidelity=fidelity(rho_AB, ent1.phi_plus_dm))
+    ent_swapped.rho = rho_AB
+
+    return ent_swapped
+
 
 def generate_next_entanglement_BK(node1:Node, L_att=22.5, tau_attempt=1.0):
     """
