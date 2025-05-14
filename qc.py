@@ -42,8 +42,16 @@ class Entanglement:
             target_state = self.phi_plus_dm
         return fidelity(self.rho, target_state)
     
-    def decohere(self, t):
-        
+    def depolarize(self, t_ms: float, T_depol_ms: float = 5.0):
+        """
+        Depolarizes self.rho for time t_ms (in milliseconds),
+        assuming characteristic decoherence time T_depol_ms.
+        """
+        epsilon = 1 - np.exp(-t_ms / T_depol_ms)
+        identity = tensor(qeye(2), qeye(2))
+        self.rho = (1 - epsilon) * self.rho + epsilon * (identity / 4)
+
+            
 
 def purify(state1, state2):
     return 
