@@ -4,7 +4,7 @@ from qutip import *
 import ctypes
 
 c = 2 * 10**2
-operation_time = 10 ** -3
+operation_time = 10 ** -3 # quantum gates operation time
 
 class Node:
     def __init__(self, name):
@@ -164,6 +164,19 @@ def get_dist_in_ent(node_dict, ent: Entanglement):
         distance += node_dict[pointer.name].nextdist
         pointer = pointer.next
     return distance
+
+def auto_purify_entlist(nodes, entlist, target_fidelity):
+    times = []
+    for ent in entlist:
+        iters = edging(entlist[0].fidelity, target_fidelity)
+        tau = get_dist_in_ent(nodes, ent) / c
+        for _ in range(iters):
+            ent.depolarize(operation_time)
+            purify(ent)
+            ent.depolarize(tau)
+        times.append((tau + operation_time) * iters)
+    t_total = max(times)
+    return t_total
     
 def main():
     # Let's assume a linked list structure
@@ -195,20 +208,24 @@ def main():
         t_depol = maxt - gentime[i]
         entlist[i].depolarize(t_depol)
 
+    # Simulating purifying the initial entanglement layer
     print(f"Initial fidelity is {entlist[0].fidelity}")
     target_init_fid = find_init_fid(0.9, math.ceil(np.log2(len(entlist))))
     print(f"Our desired initial fidelity is: {target_init_fid}")
-    iters = edging(entlist[0].fidelity, target_init_fid)
-    print(f"We need at least {iters} of iterations to purify")
-    for _ in range(iters):
-        for i in entlist:
-            i.depolarize(operation_time)
-            purify(i)
-            i.depolarize(get_dist_in_ent(nodes, i) / c)
-    t_total += operation_time * iters
+
+    time_taken = auto_purify_entlist(nodes, entlist, target_init_fid)
+    t_total += time_taken
+    # iters = edging(entlist[0].fidelity, target_init_fid)
+    # print(f"We need at least {iters} of iterations to purify")
+    # for _ in range(iters):
+    #     for i in entlist:
+    #         i.depolarize(operation_time)
+    #         purify(i)
+    #         i.depolarize(get_dist_in_ent(nodes, i) / c)
+    # t_total += operation_time * iters
     print(f"Fidelity after purification is {entlist[0].fidelity}")
     
-    ### step 2: 
+    ### step 2: Start with entanglement swap
     while len(entlist) != 1:
         next_entlist = []
         sub_total_time = 0
