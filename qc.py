@@ -165,12 +165,12 @@ def get_dist_in_ent(node_dict, ent: Entanglement):
         pointer = pointer.next
     return distance
 
-def auto_purify_entlist(nodes, entlist, target_fidelity):
+def auto_purify_entlist(nodes, entlist, target_fidelity, safety_iters = 1):
     times = []
-    total_iters = 0
+    werner_states_cost = 0
     for ent in entlist:
-        iters = edging(entlist[0].fidelity, target_fidelity)
-        total_iters += iters
+        iters = edging(entlist[0].fidelity, target_fidelity) + safety_iters
+        werner_states_cost += 2 ** iters
         tau = get_dist_in_ent(nodes, ent) / c
         for _ in range(iters):
             ent.depolarize(operation_time)
@@ -178,7 +178,7 @@ def auto_purify_entlist(nodes, entlist, target_fidelity):
             ent.depolarize(tau)
         times.append((tau + operation_time) * iters)
     t_total = max(times)
-    return t_total, total_iters
+    return t_total, werner_states_cost
     
 def main():
     # Let's assume a linked list structure
@@ -186,7 +186,7 @@ def main():
     L_att = 22.5
     t_total = 0
     target_final_fid = 0.9
-    purification_iters = []
+    werner_states_costs = []
 
     ### step 1: initial ent generation and depolarize:
     num_node = 200
@@ -217,8 +217,9 @@ def main():
     target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
     print(f"Our desired initial fidelity is: {target_init_fid}")
 
-    time_taken, iters_taken = auto_purify_entlist(nodes, entlist, target_init_fid)
-    purification_iters.append(iters_taken)
+    time_taken, cost = auto_purify_entlist(nodes, entlist, target_init_fid)
+    werner_states_costs.append(cost)
+    # print(f'Werner states cost in current level: {cost}')
     t_total += time_taken
     print(f"Fidelity after purification is {entlist[0].fidelity}")
     
@@ -226,8 +227,8 @@ def main():
     while len(entlist) != 1:
         # Perform a purification first, then entanglement swap
         target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
-        time_taken, iters_taken = auto_purify_entlist(nodes, entlist, target_final_fid)
-        purification_iters.append(iters_taken)
+        time_taken, cost = auto_purify_entlist(nodes, entlist, target_final_fid)
+        werner_states_costs.append(cost)
         t_total += time_taken
 
         # Entanglement swap process
@@ -252,7 +253,7 @@ def main():
 
     print(f"Final fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
     print(f"total time taken for this process is {t_total}")
-    print(f"Number of purification iters per level: {purification_iters}")
+    print(f"Werner states cost for each level: {werner_states_costs}")
     return
 
 if __name__ == '__main__':
