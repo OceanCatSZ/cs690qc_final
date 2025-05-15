@@ -167,8 +167,10 @@ def get_dist_in_ent(node_dict, ent: Entanglement):
 
 def auto_purify_entlist(nodes, entlist, target_fidelity):
     times = []
+    total_iters = 0
     for ent in entlist:
         iters = edging(entlist[0].fidelity, target_fidelity)
+        total_iters += iters
         tau = get_dist_in_ent(nodes, ent) / c
         for _ in range(iters):
             ent.depolarize(operation_time)
@@ -176,13 +178,14 @@ def auto_purify_entlist(nodes, entlist, target_fidelity):
             ent.depolarize(tau)
         times.append((tau + operation_time) * iters)
     t_total = max(times)
-    return t_total
+    return t_total, total_iters
     
 def main():
     # Let's assume a linked list structure
     L_total = 200 # km
     L_att = 22.5
     t_total = 0
+    target_final_fid = 0.9
 
     ### step 1: initial ent generation and depolarize:
     num_node = 200
@@ -210,19 +213,11 @@ def main():
 
     # Simulating purifying the initial entanglement layer
     print(f"Initial fidelity is {entlist[0].fidelity}")
-    target_init_fid = find_init_fid(0.9, math.ceil(np.log2(len(entlist))))
+    target_init_fid = find_init_fid(target_final_fid, math.ceil(np.log2(len(entlist))))
     print(f"Our desired initial fidelity is: {target_init_fid}")
 
-    time_taken = auto_purify_entlist(nodes, entlist, target_init_fid)
+    time_taken, iters_taken = auto_purify_entlist(nodes, entlist, target_init_fid)
     t_total += time_taken
-    # iters = edging(entlist[0].fidelity, target_init_fid)
-    # print(f"We need at least {iters} of iterations to purify")
-    # for _ in range(iters):
-    #     for i in entlist:
-    #         i.depolarize(operation_time)
-    #         purify(i)
-    #         i.depolarize(get_dist_in_ent(nodes, i) / c)
-    # t_total += operation_time * iters
     print(f"Fidelity after purification is {entlist[0].fidelity}")
     
     ### step 2: Start with entanglement swap
@@ -244,6 +239,11 @@ def main():
             next_entlist.append(new_ent)
         t_total += sub_total_time + operation_time
         entlist = next_entlist
+
+        target_init_fid = find_init_fid(target_final_fid, math.ceil(np.log2(len(entlist))))
+        time_taken, iters_taken = auto_purify_entlist(nodes, entlist, target_final_fid)
+        t_total += time_taken
+        
     print(f"Final fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
     print(f"total time taken for this process is {t_total}")
     return
