@@ -186,6 +186,7 @@ def main():
     L_att = 22.5
     t_total = 0
     target_final_fid = 0.9
+    purification_iters = []
 
     ### step 1: initial ent generation and depolarize:
     num_node = 200
@@ -213,10 +214,11 @@ def main():
 
     # Simulating purifying the initial entanglement layer
     print(f"Initial fidelity is {entlist[0].fidelity}")
-    target_init_fid = find_init_fid(target_final_fid, math.ceil(np.log2(len(entlist))))
+    target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
     print(f"Our desired initial fidelity is: {target_init_fid}")
 
     time_taken, iters_taken = auto_purify_entlist(nodes, entlist, target_init_fid)
+    purification_iters.append(iters_taken)
     t_total += time_taken
     print(f"Fidelity after purification is {entlist[0].fidelity}")
     
@@ -240,12 +242,14 @@ def main():
         t_total += sub_total_time + operation_time
         entlist = next_entlist
 
-        target_init_fid = find_init_fid(target_final_fid, math.ceil(np.log2(len(entlist))))
+        target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
         time_taken, iters_taken = auto_purify_entlist(nodes, entlist, target_final_fid)
+        purification_iters.append(iters_taken)
         t_total += time_taken
-        
+
     print(f"Final fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
     print(f"total time taken for this process is {t_total}")
+    print(f"Number of purification iters per level: {purification_iters}")
     return
 
 if __name__ == '__main__':
