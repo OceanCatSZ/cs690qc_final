@@ -28,7 +28,7 @@ class Node:
 
 
 class Entanglement:
-    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float = 100):
+    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float = 10):
         self.node1 = node1
         self.node2 = node2
         self.fidelity = fidel
@@ -56,6 +56,7 @@ class Entanglement:
         epsilon = 1 - np.exp(-t_ms / self.T_depol)
         identity = tensor(qeye(2), qeye(2))
         self.rho = (1 - epsilon) * self.rho + epsilon * (identity / 4)
+        self.calFid(self.phi_plus_dm)
     
     def update_fidelity(self, new_fid):
         self.fidelity = new_fid
@@ -152,9 +153,7 @@ def generate_next_entanglement_BK(node1:Node, L_att=22.5):
     attempts = ctypes.c_uint64(np.random.geometric(p_success)).value
     time_taken = attempts * tau_attempt
 
-    fidelity = (3 * eta + 1) / 4
-    # fidelity = 1
-    ent = Entanglement(node1, node1.next, fidel=fidelity)
+    ent = Entanglement(node1, node1.next, fidel=1)
     return ent, time_taken
 
 def get_dist_in_ent(node_dict, ent: Entanglement):
@@ -168,8 +167,6 @@ def get_dist_in_ent(node_dict, ent: Entanglement):
     
 def main():
     # Let's assume a linked list structure
-    alice = Node("A")
-    Bob = Node("B")
     L_total = 200 # km
     L_att = 22.5
     t_total = 0
@@ -183,32 +180,33 @@ def main():
     entlist = []
     gentime = []
     while pointer.next != None:
-        ent, t = generate_next_entanglement_BK(pointer)
+        ent, t = generate_next_entanglement_BK(pointer, L_att)
+        ent.depolarize(ent.node1.nextdist / c)
         if ent is None:
             continue
         entlist.append(ent)
         gentime.append(t)
         pointer = pointer.next
-    init_fid = entlist[0].fidelity
-    print(f"Initial fidelity is {init_fid}")
     maxt = max(gentime)
-    
-    target_fid = find_init_fid(0.9, num_node)
-    print(f"Our desired initial fidelity is: {target_fid}")
-    iters = edging(init_fid, target_fid)
-    print(f"We need {iters} of iterations to purify")
-    for i in entlist:
-        for j in range(iters):
+
+    t_total += maxt
+    # Simulate other repeaters waiting for the slowest one
+    for i in range(len(entlist)):
+        t_depol = maxt - gentime[i]
+        entlist[i].depolarize(t_depol)
+
+    print(f"Initial fidelity is {entlist[0].fidelity}")
+    target_init_fid = find_init_fid(0.9, num_node)
+    print(f"Our desired initial fidelity is: {target_init_fid}")
+    iters = edging(entlist[0].fidelity, target_init_fid)
+    print(f"We need at least {iters} of iterations to purify")
+    for _ in range(iters):
+        for i in entlist:
             i.depolarize(operation_time)
             purify(i)
             i.depolarize(get_dist_in_ent(nodes, i) / c)
     t_total += operation_time * iters
     print(f"Fidelity after purification is {entlist[0].fidelity}")
-    
-    t_total += maxt
-    for i in range(len(entlist)):
-        t_depol = maxt - gentime[i]
-        entlist[i].depolarize(t_depol)
     
     ### step 2: 
     while len(entlist) != 1:
