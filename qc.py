@@ -79,10 +79,10 @@ def purify(ent: Entanglement):
     F = (F**2 + ((1 - F) / 3)**2) / psucc
     ent.update_fidelity(F)
 
-def find_init_fid(final_F, n):
-    levels = math.floor(np.log2(n))
+def find_init_fid(final_F, nlevels):
+    # levels = math.floor(np.log2(n))
     init_F = final_F
-    for i in range(levels):
+    for _ in range(nlevels):
         init_F = (np.sqrt(12 * init_F - 3) + 1) / 4
     return init_F
 
@@ -196,7 +196,7 @@ def main():
         entlist[i].depolarize(t_depol)
 
     print(f"Initial fidelity is {entlist[0].fidelity}")
-    target_init_fid = find_init_fid(0.9, num_node)
+    target_init_fid = find_init_fid(0.9, math.ceil(np.log2(len(entlist))))
     print(f"Our desired initial fidelity is: {target_init_fid}")
     iters = edging(entlist[0].fidelity, target_init_fid)
     print(f"We need at least {iters} of iterations to purify")
