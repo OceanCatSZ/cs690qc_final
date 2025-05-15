@@ -38,8 +38,8 @@ class Entanglement:
         self.phi_plus_dm = ket2dm(self.phi_plus)
     
         # Construct Werner state: ρ = F |Φ⁺⟩⟨Φ⁺| + (1 - F) * (I/4)
-        identity = tensor(qeye(2), qeye(2))
-        self.rho = self.fidelity * self.phi_plus_dm + (1 - self.fidelity) * (identity / 4)
+        self.identity = tensor(qeye(2), qeye(2))
+        self.rho = self.fidelity * self.phi_plus_dm + (1 - self.fidelity) * ((self.identity - self.phi_plus_dm) / 3)
         self.T_depol = T_depol
 
     def calFid(self, target_state=None):
@@ -56,11 +56,34 @@ class Entanglement:
         epsilon = 1 - np.exp(-t_ms / self.T_depol)
         identity = tensor(qeye(2), qeye(2))
         self.rho = (1 - epsilon) * self.rho + epsilon * (identity / 4)
-
-
-def purify(state1, state2):
     
-    return 
+    def update_fidelity(self, new_fid):
+        self.fidelity = new_fid
+        self.rho = self.fidelity * self.phi_plus_dm + (1 - self.fidelity) * ((self.identity - self.phi_plus_dm) / 3)
+
+def edging(F, final_F):
+    if F < 0.55:
+        raise NameError("You dumb ass, use a higher fidelity")
+    iter = 0
+    while True:
+        if F > final_F:
+            return iter
+        psucc = F**2 + 2 * F * (1 - F) / 3 + 5 * ((1 - F) / 3) ** 2
+        F = (F**2 + ((1 - F) / 3)**2) / psucc
+        iter += 1
+
+def purify(ent: Entanglement):
+    F = ent.fidelity
+    psucc = F**2 + 2 * F * (1 - F) / 3 + 5 * ((1 - F) / 3) ** 2
+    F = (F**2 + ((1 - F) / 3)**2) / psucc
+    ent.update_fidelity(F)
+
+def find_init_fid(final_F, n):
+    levels = math.floor(np.log2(n))
+    init_F = final_F
+    for i in range(levels):
+        init_F = (np.sqrt(12 * init_F - 3) + 1) / 4
+    return init_F
 
 def build_uniform_chain(L_total, N_repeaters=0):
     # Step size per link
@@ -146,13 +169,15 @@ def main():
     # Let's assume a linked list structure
     alice = Node("A")
     Bob = Node("B")
-    L_total = 500 # km
+    L_total = 200 # km
     L_att = 22.5
     t_total = 0
 
     ### step 1: initial ent generation and depolarize:
-    nodes = build_uniform_chain(L_total, 20)
+    num_node = 200
+    nodes = build_uniform_chain(L_total, num_node)
     root = nodes["A"]
+    
     pointer = root
     entlist = []
     gentime = []
@@ -163,8 +188,19 @@ def main():
         entlist.append(ent)
         gentime.append(t)
         pointer = pointer.next
-    print(f"Initial fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
+    init_fid = entlist[0].fidelity
+    print(f"Initial fidelity is {init_fid}")
     maxt = max(gentime)
+    
+    target_fid = find_init_fid(0.75, num_node)
+    print(f"Our desired initial fidelity is: {target_fid}")
+    iters = edging(init_fid, target_fid)
+    print(f"We need {iters} of iterations to purify")
+    for i in entlist:
+        for j in range(iters):
+            purify(i)
+    print(f"Fidelity after purification is {entlist[0].fidelity}")
+    
     t_total += maxt
     for i in range(len(entlist)):
         t_depol = maxt - gentime[i]
@@ -195,4 +231,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    print("fin")
