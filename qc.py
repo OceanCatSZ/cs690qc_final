@@ -85,6 +85,7 @@ def find_init_fid(final_F, n):
         init_F = (np.sqrt(12 * init_F - 3) + 1) / 4
     return init_F
 
+
 def build_uniform_chain(L_total, N_repeaters=0):
     # Step size per link
     link_distance = L_total / (N_repeaters + 1)
@@ -118,8 +119,8 @@ def entanglement_swap(ent1: Entanglement, ent2: Entanglement) -> Entanglement:
     projector = tensor(qeye(2), P, qeye(2))  # Acts on qubits A-R1-R2-B
 
     # Apply projection and normalize
-    rho_proj = projector * rho_full * projector
-    rho_proj = rho_proj / rho_proj.tr()
+    rho_proj = projector * rho_full * projector #Projector is hermitian here
+    rho_proj = rho_proj / rho_proj.tr() #Post measurement state of outcome 1
 
     # Trace out internal qubits R1 and R2 (indices 1 and 2)
     rho_AB = rho_proj.ptrace([0, 3])
@@ -143,7 +144,7 @@ def generate_next_entanglement_BK(node1:Node, L_att=22.5):
     if node1.next is None:
         return None, None
     distance = node1.nextdist/2
-    tau_attempt = 2 * distance / c
+    tau_attempt = 2 * distance / c # Send a photon to the middle heralding station, then the heralding station send back
     eta = np.exp(-distance / L_att)
     p_success = eta**2/2
 
