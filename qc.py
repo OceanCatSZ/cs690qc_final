@@ -193,13 +193,16 @@ def main():
     print(f"Initial fidelity is {init_fid}")
     maxt = max(gentime)
     
-    target_fid = find_init_fid(0.75, num_node)
+    target_fid = find_init_fid(0.9, num_node)
     print(f"Our desired initial fidelity is: {target_fid}")
     iters = edging(init_fid, target_fid)
     print(f"We need {iters} of iterations to purify")
     for i in entlist:
         for j in range(iters):
+            i.depolarize(operation_time)
             purify(i)
+            i.depolarize(get_dist_in_ent(nodes, i) / c)
+    t_total += operation_time * iters
     print(f"Fidelity after purification is {entlist[0].fidelity}")
     
     t_total += maxt
