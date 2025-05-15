@@ -224,6 +224,13 @@ def main():
     
     ### step 2: Start with entanglement swap
     while len(entlist) != 1:
+        # Perform a purification first, then entanglement swap
+        target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
+        time_taken, iters_taken = auto_purify_entlist(nodes, entlist, target_final_fid)
+        purification_iters.append(iters_taken)
+        t_total += time_taken
+
+        # Entanglement swap process
         next_entlist = []
         sub_total_time = 0
         for i in range(0, len(entlist), 2):
@@ -242,10 +249,6 @@ def main():
         t_total += sub_total_time + operation_time
         entlist = next_entlist
 
-        target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
-        time_taken, iters_taken = auto_purify_entlist(nodes, entlist, target_final_fid)
-        purification_iters.append(iters_taken)
-        t_total += time_taken
 
     print(f"Final fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
     print(f"total time taken for this process is {t_total}")
