@@ -189,7 +189,7 @@ def main():
     werner_states_costs = []
 
     ### step 1: initial ent generation and depolarize:
-    num_node = 200
+    num_node = 6
     nodes = build_uniform_chain(L_total, num_node)
     root = nodes["A"]
     
