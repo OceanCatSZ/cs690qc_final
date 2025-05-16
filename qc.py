@@ -64,7 +64,7 @@ class Entanglement:
         self.rho = self.fidelity * self.phi_plus_dm + (1 - self.fidelity) * ((self.identity - self.phi_plus_dm) / 3)
 
 def edging(F, final_F):
-    if F < 0.5:
+    if F <= 0.5:
         return 0
     iter = 0
     while True:
@@ -315,8 +315,11 @@ def main():
     
     # question 4
     
+    l_list = []
+    f_list = []
+    c_list = []
     sample_number = 10
-    num_node_list = np.arange(4, 40, 1)
+    num_node_list = np.arange(4, 41, 1)
     distance_list = [200, 500, 1000]
     t_depol = 10
     for d in distance_list:
@@ -344,29 +347,44 @@ def main():
             for c in costs:
                 cost_total *= c
             cost_list.append(cost_total)
-        plt.plot(num_node_list, t_list)
-        plt.title(f"num_nodes vs generation time for L = {d}")
-        plt.xlabel("# of nodes")
-        plt.ylabel("generation time/t")
-        plt.show()
+        l_list.append(t_list)
     
         threshold_fid = 0.9
         for i in range(len(num_node_list)):
             if fid_list[i] >= threshold_fid:
                 print(i)
                 break
-        plt.plot(num_node_list, fid_list)
-        plt.title(f"num_nodes vs final fidelity for L = {d}")
-        plt.xlabel("# of nodes")
-        plt.ylabel("final fidelity")
-        plt.show()
+        f_list.append(fid_list)
         
-        plt.plot(num_node_list, cost_list)
-        plt.title(f"num_nodes vs final cost for L = {d}")
-        plt.xlabel("# of nodes")
-        plt.ylabel("log # Werner State Sacrificed")
-        plt.yscale('log')
-        plt.show()
+        c_list.append(cost_list)
+    
+    labels = ["L = 200", "L = 500", "L = 1000"]
+
+    for i in range(3):
+        plt.plot(num_node_list, l_list[i], label=labels[i])
+    plt.title("num_nodes vs generation time")
+    plt.xlabel("# of nodes")
+    plt.ylabel("generation time / t")
+    plt.yscale('log')
+    plt.legend()
+    plt.show()
+
+    for i in range(3):
+        plt.plot(num_node_list, f_list[i], label=labels[i])
+    plt.title(f"num_nodes vs final fidelity")
+    plt.xlabel("# of nodes")
+    plt.ylabel("final fidelity")
+    plt.legend()
+    plt.show()
+    
+    for i in range(3):
+        plt.plot(num_node_list, c_list[i], label=labels[i])
+    plt.title(f"num_nodes vs final cost")
+    plt.xlabel("# of nodes")
+    plt.ylabel("log # Werner State Sacrificed")
+    plt.yscale('log')
+    plt.legend()
+    plt.show()
 
 if __name__ == '__main__':
     main()
