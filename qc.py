@@ -128,7 +128,7 @@ def entanglement_swap(ent1: Entanglement, ent2: Entanglement) -> Entanglement:
     rho_AB = rho_proj.ptrace([0, 3])
 
     # Build resulting entanglement object
-    ent_swapped = Entanglement(ent1.node1, ent2.node2, fidel=fidelity(rho_AB, ent1.phi_plus_dm))
+    ent_swapped = Entanglement(ent1.node1, ent2.node2, fidel=fidelity(rho_AB, ent1.phi_plus_dm), T_depol = ent1.T_depol)
     ent_swapped.rho = rho_AB
 
     return ent_swapped
