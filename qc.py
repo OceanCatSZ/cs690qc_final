@@ -28,7 +28,7 @@ class Node:
 
 
 class Entanglement:
-    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float = 1):
+    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float = 10):
         self.node1 = node1
         self.node2 = node2
         self.fidelity = fidel
@@ -189,7 +189,7 @@ def main():
     werner_states_costs = []
 
     ### step 1: initial ent generation and depolarize:
-    num_node = 200
+    num_node = 6
     nodes = build_uniform_chain(L_total, num_node)
     root = nodes["A"]
     
@@ -217,7 +217,7 @@ def main():
     target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
     print(f"Our desired initial fidelity is: {target_init_fid}")
 
-    time_taken, cost = auto_purify_entlist(nodes, entlist, target_init_fid)
+    time_taken, cost = auto_purify_entlist(nodes, entlist, target_init_fid, safety_iters=0)
     werner_states_costs.append(cost)
     # print(f'Werner states cost in current level: {cost}')
     t_total += time_taken
@@ -225,12 +225,6 @@ def main():
     
     ### step 2: Start with entanglement swap
     while len(entlist) != 1:
-        # Perform a purification first, then entanglement swap
-        target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
-        time_taken, cost = auto_purify_entlist(nodes, entlist, target_final_fid, safety_iters=4)
-        werner_states_costs.append(cost)
-        t_total += time_taken
-
         # Entanglement swap process
         next_entlist = []
         sub_total_time = 0
@@ -250,6 +244,15 @@ def main():
         t_total += sub_total_time + operation_time
         entlist = next_entlist
 
+        # Perform a purification
+        target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
+        # print(target_init_fid)
+        # print(entlist[0].fidelity)
+        time_taken, cost = auto_purify_entlist(nodes, entlist, target_final_fid, safety_iters=0)
+        # print(entlist[0].fidelity)
+        # print()
+        werner_states_costs.append(cost)
+        t_total += time_taken
 
     print(f"Final fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
     print(f"total time taken for this process is {t_total}")
