@@ -294,6 +294,11 @@ def main():
     plt.ylabel("generation time/t")
     plt.show()
     
+    threshold_fid = 0.9
+    for i in range(len(t_depol_list)):
+        if fid_list[i] >= threshold_fid:
+            print(i)
+            break
     plt.plot(t_depol_list, fid_list)
     plt.title("T_depol vs final fidelity")
     plt.xlabel("T_depol parameter")
