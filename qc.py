@@ -28,7 +28,7 @@ class Node:
 
 
 class Entanglement:
-    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float = 10):
+    def __init__(self, node1: Node, node2: Node, fidel: float, T_depol: float = 1):
         self.node1 = node1
         self.node2 = node2
         self.fidelity = fidel
@@ -189,7 +189,7 @@ def main():
     werner_states_costs = []
 
     ### step 1: initial ent generation and depolarize:
-    num_node = 6
+    num_node = 200
     nodes = build_uniform_chain(L_total, num_node)
     root = nodes["A"]
     
@@ -227,7 +227,7 @@ def main():
     while len(entlist) != 1:
         # Perform a purification first, then entanglement swap
         target_init_fid = find_init_fid(target_final_fid, math.floor(np.log2(len(entlist))))
-        time_taken, cost = auto_purify_entlist(nodes, entlist, target_final_fid)
+        time_taken, cost = auto_purify_entlist(nodes, entlist, target_final_fid, safety_iters=4)
         werner_states_costs.append(cost)
         t_total += time_taken
 
