@@ -65,7 +65,7 @@ class Entanglement:
 
 def edging(F, final_F):
     if F < 0.5:
-        raise NameError("You dumb ass, use a higher fidelity")
+        return 0
     iter = 0
     while True:
         if F > final_F:
@@ -261,56 +261,112 @@ def sim(L_total, num_node, T_DEPOL):
     return werner_states_costs, t_total, entlist[0].calFid(entlist[0].phi_plus_dm)
 
 def main():
+    # question 1-3
+    # sample_number = 10
+    # num_node = 6
+    # t_depol_list = np.arange(1, 101, 1)
+    # fid_list = []
+    # t_list = []
+    # cost_list = []
+    # for i in t_depol_list:
+    #     fid_list_samples = []
+    #     t_list_samples = []
+    #     cost_list_samples = []
+    #     for _ in range(sample_number):
+    #         num_ent = num_node + 1
+    #         cost, t, fid = sim(200, num_node, i)
+    #         cost_avg_based_on_level = []
+    #         for c in cost:
+    #             cost_avg_based_on_level.append(c / num_ent)
+    #             num_ent = math.ceil(num_ent / 2)
+    #         fid_list_samples.append(fid)
+    #         t_list_samples.append(t)
+    #         cost_list_samples.append(cost_avg_based_on_level)
+    #     fid_list.append(np.mean(fid_list_samples))
+    #     t_list.append(np.mean(t_list_samples))
+    #     cost_total = 1
+    #     costs = [sum(col) / len(col) for col in zip(*cost_list_samples)]
+    #     for c in costs:
+    #         cost_total *= c
+    #     cost_list.append(cost_total)
+    # plt.plot(t_depol_list, t_list)
+    # plt.title("T_depol vs generation time")
+    # plt.xlabel("T_depol parameter")
+    # plt.ylabel("generation time/t")
+    # plt.show()
+    
+    # threshold_fid = 0.9
+    # for i in range(len(t_depol_list)):
+    #     if fid_list[i] >= threshold_fid:
+    #         print(i)
+    #         break
+    # plt.plot(t_depol_list, fid_list)
+    # plt.title("T_depol vs final fidelity")
+    # plt.xlabel("T_depol parameter")
+    # plt.ylabel("final fidelity")
+    # plt.show()
+    
+    # plt.plot(t_depol_list, cost_list)
+    # plt.title("T_depol vs final cost")
+    # plt.xlabel("T_depol parameter")
+    # plt.ylabel("log # Werner State Sacrificed")
+    # plt.yscale('log')
+    # plt.show()
+    
+    # question 4
+    
     sample_number = 10
-    num_node = 6
-    t_depol_list = np.arange(1, 101, 1)
-    fid_list = []
-    t_list = []
-    cost_list = []
-    for i in t_depol_list:
-        fid_list_samples = []
-        t_list_samples = []
-        cost_list_samples = []
-        for _ in range(sample_number):
-            num_ent = num_node + 1
-            cost, t, fid = sim(200, num_node, i)
-            cost_avg_based_on_level = []
-            for c in cost:
-                cost_avg_based_on_level.append(c / num_ent)
-                num_ent = math.ceil(num_ent / 2)
-            fid_list_samples.append(fid)
-            t_list_samples.append(t)
-            cost_list_samples.append(cost_avg_based_on_level)
-        fid_list.append(np.mean(fid_list_samples))
-        t_list.append(np.mean(t_list_samples))
-        cost_total = 1
-        costs = [sum(col) / len(col) for col in zip(*cost_list_samples)]
-        for c in costs:
-            cost_total *= c
-        cost_list.append(cost_total)
-    plt.plot(t_depol_list, t_list)
-    plt.title("T_depol vs generation time")
-    plt.xlabel("T_depol parameter")
-    plt.ylabel("generation time/t")
-    plt.show()
+    num_node_list = np.arange(4, 40, 1)
+    distance_list = [200, 500, 1000]
+    t_depol = 10
+    for d in distance_list:
+        fid_list = []
+        t_list = []
+        cost_list = []
+        for n in num_node_list:
+            fid_list_samples = []
+            t_list_samples = []
+            cost_list_samples = []
+            for _ in range(sample_number):
+                num_ent = n + 1
+                cost, t, fid = sim(d, n, t_depol)
+                cost_avg_based_on_level = []
+                for c in cost:
+                    cost_avg_based_on_level.append(c / num_ent)
+                    num_ent = math.ceil(num_ent / 2)
+                fid_list_samples.append(fid)
+                t_list_samples.append(t)
+                cost_list_samples.append(cost_avg_based_on_level)
+            fid_list.append(np.mean(fid_list_samples))
+            t_list.append(np.mean(t_list_samples))
+            cost_total = 1
+            costs = [sum(col) / len(col) for col in zip(*cost_list_samples)]
+            for c in costs:
+                cost_total *= c
+            cost_list.append(cost_total)
+        plt.plot(num_node_list, t_list)
+        plt.title(f"num_nodes vs generation time for L = {d}")
+        plt.xlabel("# of nodes")
+        plt.ylabel("generation time/t")
+        plt.show()
     
-    threshold_fid = 0.9
-    for i in range(len(t_depol_list)):
-        if fid_list[i] >= threshold_fid:
-            print(i)
-            break
-    plt.plot(t_depol_list, fid_list)
-    plt.title("T_depol vs final fidelity")
-    plt.xlabel("T_depol parameter")
-    plt.ylabel("final fidelity")
-    plt.show()
-    
-    plt.plot(t_depol_list, cost_list)
-    plt.title("T_depol vs final cost")
-    plt.xlabel("T_depol parameter")
-    plt.ylabel("log # Werner State Sacrificed")
-    plt.yscale('log')
-    plt.show()
+        threshold_fid = 0.9
+        for i in range(len(num_node_list)):
+            if fid_list[i] >= threshold_fid:
+                print(i)
+                break
+        plt.plot(num_node_list, fid_list)
+        plt.title(f"num_nodes vs final fidelity for L = {d}")
+        plt.xlabel("# of nodes")
+        plt.ylabel("final fidelity")
+        plt.show()
+        
+        plt.plot(num_node_list, cost_list)
+        plt.title(f"num_nodes vs final cost for L = {d}")
+        plt.xlabel("# of nodes")
+        plt.ylabel("log # Werner State Sacrificed")
+        plt.yscale('log')
+        plt.show()
 
 if __name__ == '__main__':
     main()
