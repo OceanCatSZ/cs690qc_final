@@ -262,6 +262,7 @@ def sim(L_total, num_node, T_DEPOL):
 
 def main():
     sample_number = 10
+    num_node = 6
     t_depol_list = np.arange(5, 101, 1)[1:]
     fid_list = []
     t_list = []
@@ -271,13 +272,22 @@ def main():
         t_list_samples = []
         cost_list_samples = []
         for _ in range(sample_number):
-            cost, t, fid = sim(200, 6, i)
+            num_ent = num_node + 1
+            cost, t, fid = sim(200, num_node, i)
+            cost_avg_based_on_level = []
+            for c in cost:
+                cost_avg_based_on_level.append(c / num_ent)
+                num_ent = math.ceil(num_ent / 2)
             fid_list_samples.append(fid)
             t_list_samples.append(t)
-            cost_list_samples.append(cost)
+            cost_list_samples.append(cost_avg_based_on_level)
         fid_list.append(np.mean(fid_list_samples))
         t_list.append(np.mean(t_list_samples))
-        cost_list.append([sum(col) / len(col) for col in zip(*cost_list_samples)])
+        cost_total = 1
+        costs = [sum(col) / len(col) for col in zip(*cost_list_samples)]
+        for c in costs:
+            cost_total *= c
+        cost_list.append(cost_total)
     plt.plot(t_depol_list, t_list)
     plt.title("depol_time vs generation time")
     plt.xlabel("depolaration time/t")
@@ -288,6 +298,12 @@ def main():
     plt.title("depol_time vs final fidelity")
     plt.xlabel("depolaration time/t")
     plt.ylabel("fidelity generation")
+    plt.show()
+    
+    plt.plot(t_depol_list, cost_list)
+    plt.title("depol_time vs final cost")
+    plt.xlabel("depolaration time/t")
+    plt.ylabel("# Werner State Sacrificed")
     plt.show()
 
 if __name__ == '__main__':
