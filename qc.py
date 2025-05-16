@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import math
 from qutip import *
 import ctypes
@@ -133,7 +134,7 @@ def entanglement_swap(ent1: Entanglement, ent2: Entanglement) -> Entanglement:
     return ent_swapped
 
 
-def generate_next_entanglement_BK(node1:Node, L_att=22.5):
+def generate_next_entanglement_BK(node1:Node, L_att=22.5, t_depol=1):
     """
     Attempts to generate an entangled pair between two *connected* nodes via the BK scheme.
     Returns (Entanglement, time_taken) if successful.
@@ -153,7 +154,7 @@ def generate_next_entanglement_BK(node1:Node, L_att=22.5):
     attempts = ctypes.c_uint64(np.random.geometric(p_success)).value
     time_taken = attempts * tau_attempt
 
-    ent = Entanglement(node1, node1.next, fidel=1)
+    ent = Entanglement(node1, node1.next, fidel=1, T_depol=t_depol)
     return ent, time_taken
 
 def get_dist_in_ent(node_dict, ent: Entanglement):
@@ -180,16 +181,16 @@ def auto_purify_entlist(nodes, entlist, target_fidelity, safety_iters = 1):
     t_total = max(times)
     return t_total, werner_states_cost
     
-def main():
+def sim(L_total, num_node, T_DEPOL):
     # Let's assume a linked list structure
-    L_total = 200 # km
+    # L_total = 200 # km
     L_att = 22.5
     t_total = 0
     target_final_fid = 0.9
     werner_states_costs = []
 
     ### step 1: initial ent generation and depolarize:
-    num_node = 6
+    # num_node = 6
     nodes = build_uniform_chain(L_total, num_node)
     root = nodes["A"]
     
@@ -197,7 +198,7 @@ def main():
     entlist = []
     gentime = []
     while pointer.next != None:
-        ent, t = generate_next_entanglement_BK(pointer, L_att)
+        ent, t = generate_next_entanglement_BK(pointer, L_att, T_DEPOL)
         ent.depolarize(ent.node1.nextdist / c)
         if ent is None:
             continue
@@ -209,8 +210,8 @@ def main():
     t_total += maxt
     # Simulate other repeaters waiting for the slowest one
     for i in range(len(entlist)):
-        t_depol = maxt - gentime[i]
-        entlist[i].depolarize(t_depol)
+        temp = maxt - gentime[i]
+        entlist[i].depolarize(temp)
 
     # Simulating purifying the initial entanglement layer
     print(f"Initial fidelity is {entlist[0].fidelity}")
@@ -252,12 +253,42 @@ def main():
         # print(entlist[0].fidelity)
         # print()
         werner_states_costs.append(cost)
-        t_total += time_taken
+        t_total += time_taken    
 
     print(f"Final fidelity is {entlist[0].calFid(entlist[0].phi_plus_dm)}")
     print(f"total time taken for this process is {t_total}")
     print(f"Werner states cost for each level: {werner_states_costs}")
-    return
+    return werner_states_costs, t_total, entlist[0].calFid(entlist[0].phi_plus_dm)
+
+def main():
+    sample_number = 10
+    t_depol_list = np.arange(5, 101, 1)[1:]
+    fid_list = []
+    t_list = []
+    cost_list = []
+    for i in t_depol_list:
+        fid_list_samples = []
+        t_list_samples = []
+        cost_list_samples = []
+        for _ in range(sample_number):
+            cost, t, fid = sim(200, 6, i)
+            fid_list_samples.append(fid)
+            t_list_samples.append(t)
+            cost_list_samples.append(cost)
+        fid_list.append(np.mean(fid_list_samples))
+        t_list.append(np.mean(t_list_samples))
+        cost_list.append([sum(col) / len(col) for col in zip(*cost_list_samples)])
+    plt.plot(t_depol_list, t_list)
+    plt.title("depol_time vs generation time")
+    plt.xlabel("depolaration time/t")
+    plt.ylabel("generation time/t")
+    plt.show()
+    
+    plt.plot(t_depol_list, fid_list)
+    plt.title("depol_time vs final fidelity")
+    plt.xlabel("depolaration time/t")
+    plt.ylabel("fidelity generation")
+    plt.show()
 
 if __name__ == '__main__':
     main()
