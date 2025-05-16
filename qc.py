@@ -263,7 +263,7 @@ def sim(L_total, num_node, T_DEPOL):
 def main():
     sample_number = 10
     num_node = 6
-    t_depol_list = np.arange(5, 101, 1)[1:]
+    t_depol_list = np.arange(5, 101, 1)
     fid_list = []
     t_list = []
     cost_list = []
@@ -303,7 +303,8 @@ def main():
     plt.plot(t_depol_list, cost_list)
     plt.title("depol_time vs final cost")
     plt.xlabel("depolaration time/t")
-    plt.ylabel("# Werner State Sacrificed")
+    plt.ylabel("# Werner State Sacrificed (log scale)")
+    plt.yscale('log')
     plt.show()
 
 if __name__ == '__main__':
