@@ -64,7 +64,7 @@ class Entanglement:
         self.rho = self.fidelity * self.phi_plus_dm + (1 - self.fidelity) * ((self.identity - self.phi_plus_dm) / 3)
 
 def edging(F, final_F):
-    if F < 0.55:
+    if F < 0.5:
         raise NameError("You dumb ass, use a higher fidelity")
     iter = 0
     while True:
@@ -289,20 +289,20 @@ def main():
             cost_total *= c
         cost_list.append(cost_total)
     plt.plot(t_depol_list, t_list)
-    plt.title("t_depol vs generation time")
-    plt.xlabel("t_depol parameter")
+    plt.title("T_depol vs generation time")
+    plt.xlabel("T_depol parameter")
     plt.ylabel("generation time/t")
     plt.show()
     
     plt.plot(t_depol_list, fid_list)
-    plt.title("t_depol vs final fidelity")
-    plt.xlabel("t_depol parameter")
+    plt.title("T_depol vs final fidelity")
+    plt.xlabel("T_depol parameter")
     plt.ylabel("final fidelity")
     plt.show()
     
     plt.plot(t_depol_list, cost_list)
-    plt.title("t_depol vs final cost")
-    plt.xlabel("t_depol parameter")
+    plt.title("T_depol vs final cost")
+    plt.xlabel("T_depol parameter")
     plt.ylabel("log # Werner State Sacrificed")
     plt.yscale('log')
     plt.show()
