@@ -263,7 +263,7 @@ def sim(L_total, num_node, T_DEPOL):
 def main():
     sample_number = 10
     num_node = 6
-    t_depol_list = np.arange(5, 101, 1)
+    t_depol_list = np.arange(1, 101, 1)
     fid_list = []
     t_list = []
     cost_list = []
